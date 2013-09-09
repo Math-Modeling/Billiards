@@ -154,7 +154,7 @@ public class Billiards extends JPanel{
 	}
 	
 	private double[] findCircle(double[] pos, double ballAngle){
-		// TODO Write Method
+		// TODO Fix Method
 		double x1 = pos[0], y1 = pos[1];
 		double x2 = pos[0]+cos(ballAngle), y2 = pos[1]+sin(ballAngle);
 
