@@ -45,8 +45,8 @@ public class Billiards extends JPanel{
 	
 	public void start(){
 		drawBackground();
-		double ballAngle = Double.parseDouble(ask("Input initial angle"));
-		double[] pos = { 0, 3, };
+		double ballAngle = Double.parseDouble(ask("Input initial angle"))*PI/180.0;
+		double[] pos = { 0, -3, };
 		double[] oldpos = pos;
 		double sideAngle = Double.NaN;
 		int nBounces = Integer.parseInt(ask("Input number of bounces"));
@@ -68,11 +68,11 @@ public class Billiards extends JPanel{
 	}
 	
 	private int xgp(double a){
-		return (int)(canvas.getWidth()*(a+3)/6);
+		return (int)(canvas.getWidth()*(3+a)/6);
 	}
 	
 	private int ygp(double a){
-		return (int)(canvas.getHeight()*(a+3)/6);
+		return (int)(canvas.getHeight()*(3-a)/6);
 	}
 	
 	@Override
@@ -88,24 +88,69 @@ public class Billiards extends JPanel{
 //		double shiftedBallAngle = ballAngle - sideAngle;
 //		double shiftedNewBallAngle = PI - shiftedBallAngle;
 //		double newBallAngle = shiftedNewBallAngle + sideAngle;
-		return PI - ballAngle + (2*sideAngle);
+		//return PI - ballAngle + (2*sideAngle);
+		return (2*sideAngle) - ballAngle;
 	}
 
 	private double findSideAngle(double[] pos) {
-		if((pos[0]*pos[0]) + (pos[1]*pos[1]) == 1){
+		double dist = (pos[0]*pos[0]) + (pos[1]*pos[1]);
+		if(dist < 2){
 			return atan2(pos[1],pos[0]) + (PI/2);
 		}else if(pos[0] == -3 || pos[0] == 3){
-			if(pos[1] == -3 || pos[1] == 3){
-				return Double.NaN;
-			}else{
+//			if(pos[1] == -3 || pos[1] == 3){
+//				return Double.NaN;
+//			}else{
 				return PI/2;
-			}
+//			}
 		}else{
 			return 0;
 		}
 	}
 
 	private double[] findSide(double[] pos, double ballAngle) {
+		double a = ballAngle;
+		a=((a%(PI*2))+(PI*10))%(PI*2);
+		double[] circlePos = findCircle(pos, a);
+		if(circlePos != null){
+			return circlePos;
+		}
+		else{
+			return findEdge(pos, a);
+		}
+	}
+	
+	private double[] findEdge(double[] pos, double a){
+		//System.out.println("Angle = " + a*180/PI);
+		//System.out.println("Currently at ("+pos[0]+","+pos[1]+")");
+		boolean hitsTop = a>0 && a<PI,
+				hitsRight = !(a>PI/2 && a<3*PI/2);
+		double tbInt,lrInt;
+		if(hitsTop){
+			tbInt = 3*(cos(a)/sin(a)) + pos[0] - pos[1]*(cos(a)/sin(a));
+		}else{
+			tbInt = -3*(cos(a)/sin(a)) + pos[0] - pos[1]*(cos(a)/sin(a));
+		}
+		if(hitsRight){
+			lrInt = 3*(sin(a)/cos(a)) + pos[1] - pos[0]*(sin(a)/cos(a));
+		}else{
+			lrInt = -3*(sin(a)/cos(a)) + pos[1] - pos[0]*(sin(a)/cos(a));
+		}
+		if(tbInt <= 3 && tbInt >= -3){
+			if(hitsTop){
+				return new double[]{tbInt, 3};
+			}else{
+				return new double[]{tbInt, -3};
+			}
+		}else{
+			if(hitsRight){
+				return new double[]{3, lrInt};
+			}else{
+				return new double[]{-3, lrInt};
+			}
+		}
+	}
+	
+	private double[] findCircle(double[] pos, double ballAngle){
 		// TODO Write Method
 		double x1 = pos[0], y1 = pos[1];
 		double x2 = pos[0]+cos(ballAngle), y2 = pos[1]+sin(ballAngle);
@@ -127,12 +172,6 @@ public class Billiards extends JPanel{
 			if(d1 < d2) return pos1;
 			else return pos2;
 		}
-		boolean hitsTop = false,
-				hitsBottom = false,
-				hitsRight = false,
-				hitsLeft = false;
-		double topIntersect = 3/tan(ballAngle) + pos[1]/tan(ballAngle) - pos[0];
-		//hitsTop = !Double.isInfinite(topIntersect) && 
-		return new double[]{3,1};
+		return null;
 	}
 }
