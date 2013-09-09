@@ -112,7 +112,7 @@ public class Billiards extends JPanel{
 	private double[] findSide(double[] pos, double ballAngle) {
 		double a = ballAngle;
 		a=((a%(PI*2))+(PI*10))%(PI*2);
-		double d2 = (pos[0]*pos[0])+(pos[1]+pos[1]);
+		double d2 = (pos[0]*pos[0])+(pos[1]*pos[1]);
 		if(d2>2){
 			double[] circlePos = findCircle(pos, a);
 			if(circlePos != null){
