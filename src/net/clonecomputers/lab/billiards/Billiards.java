@@ -82,14 +82,16 @@ public class Billiards extends JPanel{
 	}
 
 	private double findBallAngle(double ballAngle, double sideAngle) {
-		if(Double.isNaN(sideAngle)){
-			return ballAngle + PI;
-		}
+		double a = ballAngle;
+		a=((a%(PI*2))+(PI*10))%(PI*2);
+//		if(Double.isNaN(sideAngle)){
+//			return ballAngle + PI;
+//		}
 //		double shiftedBallAngle = ballAngle - sideAngle;
 //		double shiftedNewBallAngle = PI - shiftedBallAngle;
 //		double newBallAngle = shiftedNewBallAngle + sideAngle;
 		//return PI - ballAngle + (2*sideAngle);
-		return (2*sideAngle) - ballAngle;
+		return (2*sideAngle) - a;
 	}
 
 	private double findSideAngle(double[] pos) {
@@ -110,15 +112,16 @@ public class Billiards extends JPanel{
 	private double[] findSide(double[] pos, double ballAngle) {
 		double a = ballAngle;
 		a=((a%(PI*2))+(PI*10))%(PI*2);
-		double[] circlePos = findCircle(pos, a);
-		if(circlePos != null){
-			return circlePos;
+		double d2 = (pos[0]*pos[0])+(pos[1]+pos[1]);
+		if(d2>2){
+			double[] circlePos = findCircle(pos, a);
+			if(circlePos != null){
+				return circlePos;
+			}
 		}
-		else{
-			return findEdge(pos, a);
-		}
+		return findEdge(pos, a);
 	}
-	
+
 	private double[] findEdge(double[] pos, double a){
 		//System.out.println("Angle = " + a*180/PI);
 		//System.out.println("Currently at ("+pos[0]+","+pos[1]+")");
@@ -173,5 +176,9 @@ public class Billiards extends JPanel{
 			else return pos2;
 		}
 		return null;
+	}
+	
+	private String p(double[] pos){
+		return "(" + pos[0] + "," + pos[1] + ")";
 	}
 }
