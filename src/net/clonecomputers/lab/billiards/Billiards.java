@@ -154,30 +154,50 @@ public class Billiards extends JPanel{
 	}
 	
 	private double[] findCircle(double[] pos, double ballAngle){
-		// TODO Fix Method
-		double x1 = pos[0], y1 = pos[1];
-		double x2 = pos[0]+cos(ballAngle), y2 = pos[1]+sin(ballAngle);
-
-		double dx = x2 - x1;
-		double dy = y2 - y1;
-		double dr = sqrt(dx*dx + dy*dy);
-		double D = x1*y2 - x2*y1;
-		double s = dr*dr - D*D;
-		if(!(s<=0)){
-			double px1 = (D*dy + signum(dy)*dx*sqrt(s)) / (dr*dr);
-			double px2 = (D*dx - signum(dy)*dx*sqrt(s)) / (dr*dr);
-			double py1 = (-D*dy + abs(dy)*sqrt(s)) / (dr*dr);
-			double py2 = (-D*dx - abs(dy)*sqrt(s)) / (dr*dr);
-			double[] pos1 = {px1, py1};
-			double[] pos2 = {px2, py2};
-			double d1 = hypot(px1 - pos[0], py1 - pos[1]);
-			double d2 = hypot(px2 - pos[0], py2 - pos[1]);
-			if(d1 < d2) return pos1;
-			else return pos2;
+//		double x1 = pos[0], y1 = pos[1];
+//		double x2 = pos[0]+cos(ballAngle), y2 = pos[1]+sin(ballAngle);
+//
+//		double dx = x2 - x1;
+//		double dy = y2 - y1;
+//		double dr = sqrt(dx*dx + dy*dy);
+//		double D = x1*y2 - x2*y1;
+//		double s = dr*dr - D*D;
+//		if(!(s<=0)){
+//			double px1 = (D*dy + signum(dy)*dx*sqrt(s)) / (dr*dr);
+//			double px2 = (D*dx - signum(dy)*dx*sqrt(s)) / (dr*dr);
+//			double py1 = (-D*dy + abs(dy)*sqrt(s)) / (dr*dr);
+//			double py2 = (-D*dx - abs(dy)*sqrt(s)) / (dr*dr);
+//			double[] pos1 = {px1, py1};
+//			double[] pos2 = {px2, py2};
+//			double d1 = hypot(px1 - pos[0], py1 - pos[1]);
+//			double d2 = hypot(px2 - pos[0], py2 - pos[1]);
+//			if(d1 < d2) return pos1;
+//			else return pos2;
+//		}
+//		return null;
+		
+		// Polar Cordinates FTW!
+		
+		double x=pos[0],y=pos[1],theta=ballAngle,gamma=theta+PI/2;
+		double r0 = y*cos(theta) - x*sin(theta);
+		if(r0 > 1 || r0 < -1) return null;
+		double phi1 = gamma + acos(r0);
+		double phi2 = gamma - acos(r0);
+		double[] p1 = {cos(phi1), sin(phi1)};
+		double[] p2 = {cos(phi2), sin(phi2)};
+		
+		if(dist2(p1,pos) < dist2(p2,pos)){
+			return p1;
+		}else{
+			return p2;
 		}
-		return null;
 	}
 	
+	public double dist2(double[] p1, double[] p2){
+		return ((p1[0] - p2[0]) * (p1[0] - p2[0])) + ((p1[1] - p2[1]) * (p1[1] - p2[1]));
+	}
+	
+	@SuppressWarnings("unused")
 	private String p(double[] pos){
 		return "(" + pos[0] + "," + pos[1] + ")";
 	}
