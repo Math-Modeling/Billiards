@@ -1,6 +1,5 @@
 /bin
 *.class
-*.java
 .settings
 .classpath
 .project
