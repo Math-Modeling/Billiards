@@ -7,16 +7,18 @@ import java.awt.image.BufferedImage;
 import static java.lang.Math.*;
 
 public class Billiards extends JPanel{
-	private BufferedImage canvas = new BufferedImage(300,300,BufferedImage.TYPE_INT_RGB);
+	private BufferedImage canvas;
+	private double circleRadius;
 	public static void main(String[] args) {
-		final Billiards b = new Billiards();
+		final int w = 600, h = 600;
+		final Billiards b = new Billiards(w,h);
 		EventQueue.invokeLater(new Runnable(){
 
 			@Override
 			public void run() {
 				JFrame window = new JFrame("Billiards");
 				window.add(b);
-				b.setPreferredSize(new Dimension(300,300));
+				b.setPreferredSize(new Dimension(w+10,h+10));
 				window.pack();
 				window.setResizable(false);
 				window.setVisible(true);
@@ -30,38 +32,56 @@ public class Billiards extends JPanel{
 		return JOptionPane.showInputDialog(this, what);
 	}
 	
-	public Billiards(){
-		
+	public Billiards(int width, int height){
+		canvas = new BufferedImage(width+1,height+1,BufferedImage.TYPE_INT_ARGB);
 	}
 	
 	public void drawBackground(){
 		Graphics g = canvas.getGraphics();
 		g.setColor(Color.WHITE);
-		g.fillRect(0, 0, canvas.getWidth()-1, canvas.getHeight()-1);
+		g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 		g.setColor(Color.BLACK);
-		g.drawRect(0, 0, canvas.getWidth()-2, canvas.getHeight()-2);
-		g.drawOval(canvas.getWidth()/3, canvas.getHeight()/3, canvas.getWidth()/3, canvas.getHeight()/3);
+		//g.drawRect(0, 0, canvas.getWidth()-1, canvas.getHeight()-1);
+		int wdiameter = (int)(circleRadius*canvas.getWidth()/3);
+		int hdiameter = (int)(circleRadius*canvas.getHeight()/3);
+		g.drawOval(canvas.getWidth()/2 - wdiameter/2, canvas.getHeight()/2 - hdiameter/2, wdiameter, hdiameter);
 	}
 	
 	public void start(){
+		circleRadius = Double.parseDouble(ask("Input circle radius"));
 		drawBackground();
 		double ballAngle = Double.parseDouble(ask("Input initial angle"))*PI/180.0;
 		double[] pos = { 0, -3, };
 		double[] oldpos = pos;
 		double sideAngle = Double.NaN;
-		int nBounces = Integer.parseInt(ask("Input number of bounces"));
-		for(int i = 0; i < nBounces; i++){
+		double maxDistance = Double.parseDouble(ask("Input distance to travel"));
+		double curDist = 0;
+		for(int i = 0; curDist < maxDistance; i++){
+			System.out.println("#"+i+": "+p(pos));
 			oldpos = pos;
 			pos = findSide(pos, ballAngle);
+			curDist += sqrt(dist2(pos,oldpos));
+			if(curDist > maxDistance) pos = moveBackwards(oldpos, pos, curDist - maxDistance);
 			sideAngle = findSideAngle(pos);
 			ballAngle = findBallAngle(ballAngle,sideAngle);
 			draw(pos, oldpos);
 		}
+		Graphics g = canvas.getGraphics();
+		g.setColor(Color.RED);
+		g.fillOval(xgp(pos[0])-4, ygp(pos[1])-4, 8, 8);
+		repaint();
+	}
+
+	private double[] moveBackwards(double[] pos, double[] newPos, double d) {
+		double r = sqrt(dist2(pos,newPos));
+		double dx = newPos[0] - pos[0];
+		double dy = newPos[1] - pos[1];
+		return new double[]{pos[0]+dx*(d/r), pos[1]+dy*(d/r)};
 	}
 
 	private synchronized void draw(double[] pos, double[] oldpos) {
 		Graphics g = canvas.getGraphics();
-		g.setColor(Color.BLACK);
+		g.setColor(new Color(0,0,255,200));
 		int gx1 = xgp(pos[0]), gy1 = ygp(pos[1]), gx2 = xgp(oldpos[0]), gy2 = ygp(oldpos[1]);
 		g.drawLine(gx1, gy1, gx2, gy2);
 		this.repaint();
@@ -78,7 +98,8 @@ public class Billiards extends JPanel{
 	@Override
 	public synchronized void paintComponent(Graphics g){
 		super.paintComponent(g);
-		g.drawImage(canvas, 0, 0, this);
+		g.drawImage(canvas, 5, 5, this);
+		g.drawRect(4, 4, canvas.getWidth()+1, canvas.getHeight()+1);
 	}
 
 	private double findBallAngle(double ballAngle, double sideAngle) {
@@ -95,25 +116,19 @@ public class Billiards extends JPanel{
 	}
 
 	private double findSideAngle(double[] pos) {
-		double dist = (pos[0]*pos[0]) + (pos[1]*pos[1]);
-		if(dist < 2){
-			return atan2(pos[1],pos[0]) + (PI/2);
-		}else if(pos[0] == -3 || pos[0] == 3){
-//			if(pos[1] == -3 || pos[1] == 3){
-//				return Double.NaN;
-//			}else{
-				return PI/2;
-//			}
-		}else{
+		if(pos[0] == -3 || pos[0] == 3){
+			return PI/2;
+		}else if(pos[1] == -3 || pos[1] == 3){
 			return 0;
+		}else{
+			return atan2(pos[1],pos[0]) + (PI/2);
 		}
 	}
 
 	private double[] findSide(double[] pos, double ballAngle) {
 		double a = ballAngle;
 		a=((a%(PI*2))+(PI*10))%(PI*2);
-		double d2 = (pos[0]*pos[0])+(pos[1]*pos[1]);
-		if(d2>2){
+		if(onEdge(pos)){
 			double[] circlePos = findCircle(pos, a);
 			if(circlePos != null){
 				return circlePos;
@@ -154,37 +169,15 @@ public class Billiards extends JPanel{
 	}
 	
 	private double[] findCircle(double[] pos, double ballAngle){
-//		double x1 = pos[0], y1 = pos[1];
-//		double x2 = pos[0]+cos(ballAngle), y2 = pos[1]+sin(ballAngle);
-//
-//		double dx = x2 - x1;
-//		double dy = y2 - y1;
-//		double dr = sqrt(dx*dx + dy*dy);
-//		double D = x1*y2 - x2*y1;
-//		double s = dr*dr - D*D;
-//		if(!(s<=0)){
-//			double px1 = (D*dy + signum(dy)*dx*sqrt(s)) / (dr*dr);
-//			double px2 = (D*dx - signum(dy)*dx*sqrt(s)) / (dr*dr);
-//			double py1 = (-D*dy + abs(dy)*sqrt(s)) / (dr*dr);
-//			double py2 = (-D*dx - abs(dy)*sqrt(s)) / (dr*dr);
-//			double[] pos1 = {px1, py1};
-//			double[] pos2 = {px2, py2};
-//			double d1 = hypot(px1 - pos[0], py1 - pos[1]);
-//			double d2 = hypot(px2 - pos[0], py2 - pos[1]);
-//			if(d1 < d2) return pos1;
-//			else return pos2;
-//		}
-//		return null;
-		
 		// Polar Cordinates FTW!
-		
+		double rc = circleRadius;
 		double x=pos[0],y=pos[1],theta=ballAngle,gamma=theta+PI/2;
 		double r0 = y*cos(theta) - x*sin(theta);
-		if(r0 > 1 || r0 < -1) return null;
-		double phi1 = gamma + acos(r0);
-		double phi2 = gamma - acos(r0);
-		double[] p1 = {cos(phi1), sin(phi1)};
-		double[] p2 = {cos(phi2), sin(phi2)};
+		if(r0 > rc || r0 < -rc) return null;
+		double phi1 = gamma + acos(r0/rc);
+		double phi2 = gamma - acos(r0/rc);
+		double[] p1 = {rc*cos(phi1), rc*sin(phi1)};
+		double[] p2 = {rc*cos(phi2), rc*sin(phi2)};
 		
 		if(dist2(p1,pos) < dist2(p2,pos)){
 			return p1;
@@ -200,5 +193,12 @@ public class Billiards extends JPanel{
 	@SuppressWarnings("unused")
 	private String p(double[] pos){
 		return "(" + pos[0] + "," + pos[1] + ")";
+	}
+	
+	private boolean onEdge(double[] pos){
+		return pos[0] == -3 ||
+				pos[0] == 3 ||
+				pos[1] == -3 ||
+				pos[1] == 3;
 	}
 }
