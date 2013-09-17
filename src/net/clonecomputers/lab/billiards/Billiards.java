@@ -49,12 +49,23 @@ public class Billiards extends JPanel{
 	
 	public void start(){
 		circleRadius = Double.parseDouble(ask("Input circle radius"));
-		drawBackground();
 		double ballAngle = Double.parseDouble(ask("Input initial angle"))*PI/180.0;
+		double maxDistance = Double.parseDouble(ask("Input distance to travel"));
+		int howMany = Integer.parseInt(ask("How many?"));
+		if(howMany < 2) {
+			start(ballAngle,maxDistance);
+			return;
+		}
+		double dx = Double.parseDouble(ask("Input x error"));
+		double dtheta = Double.parseDouble(ask("Input theta error"));
+		
+	}
+	
+	public void start(double ballAngle, double maxDistance){
+		drawBackground();
 		double[] pos = { 0, -3, };
 		double[] oldpos = pos;
 		double sideAngle = Double.NaN;
-		double maxDistance = Double.parseDouble(ask("Input distance to travel"));
 		double curDist = 0;
 		for(int i = 0; curDist < maxDistance; i++){
 			System.out.println("#"+i+": "+p(pos));
