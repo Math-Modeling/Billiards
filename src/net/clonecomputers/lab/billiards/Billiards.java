@@ -59,7 +59,7 @@ public class Billiards extends JPanel{
 		}
 		double[][] finalPoints = new double[howMany][];
 		double dx = Double.parseDouble(ask("Input x error"));
-		double dtheta = Double.parseDouble(ask("Input theta error"));
+		double dtheta = Double.parseDouble(ask("Input theta error"))*PI/180.0;
 		for(int n = 0; n < howMany; n++){
 			double x = (random()*2-1)*dx;
 			double theta = ballAngle + (random()*2-1)*dtheta;
@@ -98,13 +98,14 @@ public class Billiards extends JPanel{
 			if(outputSteps) System.out.println("#"+i+": "+p(pos));
 			oldpos = pos;
 			pos = findSide(pos, ballAngle);
+			double oldDist = curDist;
 			curDist += sqrt(dist2(pos,oldpos));
-			if(curDist > maxDistance) pos = moveBackwards(oldpos, pos, curDist - maxDistance);
+			if(curDist > maxDistance) pos = moveBackwards(oldpos, pos, maxDistance - oldDist);
 			sideAngle = findSideAngle(pos);
 			ballAngle = findBallAngle(ballAngle,sideAngle);
 			if(outputGUI) draw(pos, oldpos);
 		}
-		if(outputGUI){
+		if(true){
 			Graphics g = canvas.getGraphics();
 			g.setColor(Color.RED);
 			g.fillOval(xgp(pos[0])-4, ygp(pos[1])-4, 8, 8);
