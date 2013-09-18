@@ -49,38 +49,68 @@ public class Billiards extends JPanel{
 	
 	public void start(){
 		circleRadius = Double.parseDouble(ask("Input circle radius"));
+		drawBackground();
 		double ballAngle = Double.parseDouble(ask("Input initial angle"))*PI/180.0;
 		double maxDistance = Double.parseDouble(ask("Input distance to travel"));
 		int howMany = Integer.parseInt(ask("How many?"));
 		if(howMany < 2) {
-			start(ballAngle,maxDistance);
+			start(new double[]{0,-3}, ballAngle,maxDistance, true, true);
 			return;
 		}
+		double[][] finalPoints = new double[howMany][];
 		double dx = Double.parseDouble(ask("Input x error"));
 		double dtheta = Double.parseDouble(ask("Input theta error"));
+		for(int n = 0; n < howMany; n++){
+			double x = (random()*2-1)*dx;
+			double theta = ballAngle + (random()*2-1)*dtheta;
+			finalPoints[n] = start(new double[]{x,-3}, theta, maxDistance, n<10, false);
+		}
 		
+		double[] sum = {0,0};
+		for(double[] p: finalPoints){
+			sum[0]+=p[0];
+			sum[1]+=p[1];
+		}
+		double[] average = {
+				sum[0]/finalPoints.length,
+				sum[1]/finalPoints.length,
+		};
+		double dSum = 0;
+		for(double[] p: finalPoints){
+			dSum += sqrt(dist2(p,average));
+		}
+		double dAvg = dSum/finalPoints.length;
+		System.out.println("Average distance to midpoint: "+dAvg);
+		
+		Graphics g = canvas.getGraphics();
+		g.setColor(Color.RED);
+		for(double[] p: finalPoints){
+			g.fillOval(xgp(p[0])-4, ygp(p[1])-4, 8, 8);
+		}
+		repaint();
 	}
 	
-	public void start(double ballAngle, double maxDistance){
-		drawBackground();
-		double[] pos = { 0, -3, };
+	public double[] start(double[] pos, double ballAngle, double maxDistance, boolean outputGUI, boolean outputSteps){
 		double[] oldpos = pos;
 		double sideAngle = Double.NaN;
 		double curDist = 0;
 		for(int i = 0; curDist < maxDistance; i++){
-			System.out.println("#"+i+": "+p(pos));
+			if(outputSteps) System.out.println("#"+i+": "+p(pos));
 			oldpos = pos;
 			pos = findSide(pos, ballAngle);
 			curDist += sqrt(dist2(pos,oldpos));
 			if(curDist > maxDistance) pos = moveBackwards(oldpos, pos, curDist - maxDistance);
 			sideAngle = findSideAngle(pos);
 			ballAngle = findBallAngle(ballAngle,sideAngle);
-			draw(pos, oldpos);
+			if(outputGUI) draw(pos, oldpos);
 		}
-		Graphics g = canvas.getGraphics();
-		g.setColor(Color.RED);
-		g.fillOval(xgp(pos[0])-4, ygp(pos[1])-4, 8, 8);
-		repaint();
+		if(outputGUI){
+			Graphics g = canvas.getGraphics();
+			g.setColor(Color.RED);
+			g.fillOval(xgp(pos[0])-4, ygp(pos[1])-4, 8, 8);
+			repaint();
+		}
+		return pos;
 	}
 
 	private double[] moveBackwards(double[] pos, double[] newPos, double d) {
