@@ -1,11 +1,17 @@
 package net.clonecomputers.lab.billiards;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-
 import static java.lang.Math.*;
 
+import java.awt.*;
+import java.awt.image.*;
+import java.io.*;
+
+import javax.swing.*;
+
+import org.apache.commons.csv.*;
+//import javax.imageio.ImageIO;
+
+@SuppressWarnings("serial")
 public class Billiards extends JPanel{
 	private BufferedImage canvas;
 	private double circleRadius;
@@ -53,43 +59,118 @@ public class Billiards extends JPanel{
 		double ballAngle = Double.parseDouble(ask("Input initial angle"))*PI/180.0;
 		double maxDistance = Double.parseDouble(ask("Input distance to travel"));
 		int howMany = Integer.parseInt(ask("How many?"));
-		if(howMany < 2) {
+		/*if(howMany < 2) {
 			start(new double[]{0,-3}, ballAngle,maxDistance, true, true);
 			return;
-		}
-		double[][] finalPoints = new double[howMany][];
+		}*/
+		//double[][] finalPoints = new double[howMany][];
 		double dx = Double.parseDouble(ask("Input x error"));
 		double dtheta = Double.parseDouble(ask("Input theta error"))*PI/180.0;
+		/*
 		for(int n = 0; n < howMany; n++){
-			double x = (random()*2-1)*dx;
-			double theta = ballAngle + (random()*2-1)*dtheta;
+			double x = (random()-.5)*dx;
+			double theta = ballAngle + (random()-.5)*dtheta;
 			finalPoints[n] = start(new double[]{x,-3}, theta, maxDistance, n<10, false);
 		}
+		System.out.println("Average distance to midpoint: "+avgDistToMidpoint(finalPoints));
+		*/
 		
+		int numSteps = Integer.parseInt(ask("Input number of steps"));
+		double[][] points = new double[howMany][]; // arr of {x,y,theta}
+		double[][] interestingStuff = new double[numSteps][2];
+		for(int i = 0; i < points.length; i++){
+			points[i] = new double[3];
+			points[i][0] = (random()-.5)*dx;
+			points[i][1] = -3;
+			points[i][2] = ballAngle + (random()-.5)*dtheta;
+		}
+		for(int i = 0; i < numSteps; i++){
+			for(int n = 0; n < howMany; n++){
+				points[n] = start(new double[]{points[n][0],points[n][1]},points[n][2],maxDistance/numSteps,n<10,false);
+			}
+			repaint();
+			interestingStuff[i] = interestingProperties(points);
+		}
+		
+		//System.out.println(Arrays.deepToString(interestingStuff));
+		Double[][] printableStuff = new Double[interestingStuff[0].length][interestingStuff.length];
+		for(int i = 0; i < interestingStuff.length; i++){
+			for(int j = 0; j < interestingStuff[i].length; j++){
+				printableStuff[j][i] = interestingStuff[i][j];
+			}
+		}
+		JFileChooser chooser = new JFileChooser();
+		chooser.showSaveDialog(this);
+		File f = chooser.getSelectedFile();
+		CSVPrinter csv;
+		try {
+			csv = new CSVPrinter(new FileWriter(f), CSVFormat.EXCEL);
+		} catch (IOException e2) {
+			throw new RuntimeException(e2);
+		}
+		try {
+			csv.printRecords(printableStuff);
+		} catch (IOException e1) {
+			throw new RuntimeException(e1);
+		}finally{
+			try {
+				csv.close();
+			} catch (IOException e1) {
+				throw new RuntimeException(e1);
+			}
+		}
+		
+		Graphics2D g = canvas.createGraphics();
+		g.setColor(Color.RED);
+		for(double[] p: points){
+			g.fillOval(xgp(p[0])-4, ygp(p[1])-4, 8, 8);
+		}
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		repaint();
+
+	}
+
+	public double averageDistanceFromMidpoint(double[][] points){
 		double[] sum = {0,0};
-		for(double[] p: finalPoints){
+		for(double[] p: points){
 			sum[0]+=p[0];
 			sum[1]+=p[1];
 		}
 		double[] average = {
-				sum[0]/finalPoints.length,
-				sum[1]/finalPoints.length,
+				sum[0]/points.length,
+				sum[1]/points.length,
 		};
 		double dSum = 0;
-		for(double[] p: finalPoints){
+		for(double[] p: points){
 			dSum += sqrt(dist2(p,average));
 		}
-		double dAvg = dSum/finalPoints.length;
-		System.out.println("Average distance to midpoint: "+dAvg);
-		
-		Graphics g = canvas.getGraphics();
-		g.setColor(Color.RED);
-		for(double[] p: finalPoints){
-			g.fillOval(xgp(p[0])-4, ygp(p[1])-4, 8, 8);
-		}
-		repaint();
+		return dSum/points.length;
 	}
 	
+	public double maximumMinimumDistance(double[][] points){
+		double maxMin2 = 0;
+		for(int i = 0; i < points.length; i++){
+			double min2 = 10000;
+			for(int j = 0; j < points.length; j++){
+				double d2 = dist2(points[i],points[j]);
+				if(j != i && d2 < min2) min2 = d2;
+			}
+			if(min2 > maxMin2) maxMin2 = min2;
+		}
+		return sqrt(maxMin2);
+	}
+	
+	public double[] interestingProperties(double[][] points){
+		return new double[]{
+				averageDistanceFromMidpoint(points),
+				maximumMinimumDistance(points),
+		};
+	}
+
 	public double[] start(double[] pos, double ballAngle, double maxDistance, boolean outputGUI, boolean outputSteps){
 		double[] oldpos = pos;
 		double sideAngle = Double.NaN;
@@ -100,18 +181,21 @@ public class Billiards extends JPanel{
 			pos = findSide(pos, ballAngle);
 			double oldDist = curDist;
 			curDist += sqrt(dist2(pos,oldpos));
-			if(curDist > maxDistance) pos = moveBackwards(oldpos, pos, maxDistance - oldDist);
-			sideAngle = findSideAngle(pos);
-			ballAngle = findBallAngle(ballAngle,sideAngle);
+			if(curDist > maxDistance){
+				pos = moveBackwards(oldpos, pos, maxDistance - oldDist);
+			}else{
+				sideAngle = findSideAngle(pos);
+				ballAngle = findBallAngle(ballAngle,sideAngle);
+			}
 			if(outputGUI) draw(pos, oldpos);
 		}
-		if(true){
+		if(false){
 			Graphics g = canvas.getGraphics();
 			g.setColor(Color.RED);
 			g.fillOval(xgp(pos[0])-4, ygp(pos[1])-4, 8, 8);
 			repaint();
 		}
-		return pos;
+		return new double[]{pos[0],pos[1],ballAngle};
 	}
 
 	private double[] moveBackwards(double[] pos, double[] newPos, double d) {
@@ -170,7 +254,11 @@ public class Billiards extends JPanel{
 	private double[] findSide(double[] pos, double ballAngle) {
 		double a = ballAngle;
 		a=((a%(PI*2))+(PI*10))%(PI*2);
-		if(onEdge(pos)){
+		double circleNormal = atan2(pos[1],pos[0]);
+		double ca = (circleNormal - a);
+		ca=((ca%(PI*2))+(PI*10))%(PI*2);
+		boolean facingCircle = ca > PI/2 && ca < 3*PI/2;
+		if(facingCircle){
 			double[] circlePos = findCircle(pos, a);
 			if(circlePos != null){
 				return circlePos;
