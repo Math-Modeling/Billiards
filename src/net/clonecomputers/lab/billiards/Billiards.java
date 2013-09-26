@@ -5,6 +5,7 @@ import static java.lang.Math.*;
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -93,12 +94,44 @@ public class Billiards extends JPanel{
 		}
 		
 		//System.out.println(Arrays.deepToString(interestingStuff));
-		Double[][] printableStuff = new Double[interestingStuff[0].length][interestingStuff.length];
+		/*Double[][] printableStuff = new Double[interestingStuff[0].length][interestingStuff.length];
 		for(int i = 0; i < interestingStuff.length; i++){
 			for(int j = 0; j < interestingStuff[i].length; j++){
 				printableStuff[j][i] = interestingStuff[i][j];
 			}
+		}*/
+		
+		Object[][] stuffToPrint = new Object[interestingStuff.length+4][];
+		int i = 0;
+		stuffToPrint[i++] = new String[]{
+				"radius",
+				"angle",
+				"distance",
+				"how many",
+				"x error",
+				"theta error",
+				"steps",
+		};
+		stuffToPrint[i++] = new Double[]{
+				circleRadius,
+				ballAngle*180/PI,
+				maxDistance,
+				(double) howMany,
+				dx,
+				dtheta*180/PI,
+				(double) numSteps,
+		};
+		stuffToPrint[i++] = new String[]{
+				"average distance from midpoint",
+				"maximum minimum distance",
+		};
+		for(int l = 0; l < interestingStuff.length; l++){
+			stuffToPrint[l+i] = new Object[interestingStuff[l].length];
+			for(int j = 0; j < interestingStuff[l].length; j++){
+				stuffToPrint[l+i][j] = interestingStuff[l][j];
+			}
 		}
+		//System.out.println(Arrays.deepToString(stuffToPrint));
 		JFileChooser chooser = new JFileChooser();
 		chooser.showSaveDialog(this);
 		File f = chooser.getSelectedFile();
@@ -109,7 +142,7 @@ public class Billiards extends JPanel{
 			throw new RuntimeException(e2);
 		}
 		try {
-			csv.printRecords(printableStuff);
+			csv.printRecords(stuffToPrint);
 		} catch (IOException e1) {
 			throw new RuntimeException(e1);
 		}finally{
