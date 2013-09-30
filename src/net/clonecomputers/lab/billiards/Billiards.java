@@ -16,6 +16,7 @@ import org.apache.commons.csv.*;
 public class Billiards extends JPanel{
 	private BufferedImage canvas;
 	private double circleRadius;
+	private int hitCircle;
 	public static void main(String[] args) {
 		final int w = 600, h = 600;
 		final Billiards b = new Billiards(w,h);
@@ -124,6 +125,7 @@ public class Billiards extends JPanel{
 		stuffToPrint[i++] = new String[]{
 				"average distance from midpoint",
 				"maximum minimum distance",
+				"what fraction hit the circle",
 		};
 		for(int l = 0; l < interestingStuff.length; l++){
 			stuffToPrint[l+i] = new Object[interestingStuff[l].length];
@@ -198,9 +200,12 @@ public class Billiards extends JPanel{
 	}
 	
 	public double[] interestingProperties(double[][] points){
+		double cTmp = hitCircle;
+		hitCircle = 0;
 		return new double[]{
 				averageDistanceFromMidpoint(points),
 				maximumMinimumDistance(points),
+				cTmp/(double)points.length, // no int division
 		};
 	}
 
@@ -209,6 +214,7 @@ public class Billiards extends JPanel{
 		double sideAngle = Double.NaN;
 		double curDist = 0;
 		for(int i = 0; curDist < maxDistance; i++){
+			int hitCircleStart = hitCircle;
 			if(outputSteps) System.out.println("#"+i+": "+p(pos));
 			oldpos = pos;
 			pos = findSide(pos, ballAngle);
@@ -216,6 +222,7 @@ public class Billiards extends JPanel{
 			curDist += sqrt(dist2(pos,oldpos));
 			if(curDist > maxDistance){
 				pos = moveBackwards(oldpos, pos, maxDistance - oldDist);
+				hitCircle = hitCircleStart;
 			}else{
 				sideAngle = findSideAngle(pos);
 				ballAngle = findBallAngle(ballAngle,sideAngle);
@@ -294,6 +301,7 @@ public class Billiards extends JPanel{
 		if(facingCircle){
 			double[] circlePos = findCircle(pos, a);
 			if(circlePos != null){
+				hitCircle++;
 				return circlePos;
 			}
 		}
