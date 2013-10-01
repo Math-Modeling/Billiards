@@ -79,7 +79,7 @@ public class Billiards extends JPanel{
 		
 		int numSteps = Integer.parseInt(ask("Input number of steps"));
 		double[][] points = new double[howMany][]; // arr of {x,y,theta}
-		double[][] interestingStuff = new double[numSteps][2];
+		double[][] interestingStuff = new double[numSteps][];
 		for(int i = 0; i < points.length; i++){
 			points[i] = new double[3];
 			points[i][0] = (random()-.5)*dx;
