@@ -33,7 +33,7 @@ public class Billiards extends JPanel{
 				window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			}
 		});
-		b.start();
+		b.run();
 	}
 	
 	public String ask(String what){
@@ -55,14 +55,14 @@ public class Billiards extends JPanel{
 		g.drawOval(canvas.getWidth()/2 - wdiameter/2, canvas.getHeight()/2 - hdiameter/2, wdiameter, hdiameter);
 	}
 	
-	public void start(){
+	public void run(){
 		circleRadius = Double.parseDouble(ask("Input circle radius"));
 		drawBackground();
 		double ballAngle = Double.parseDouble(ask("Input initial angle"))*PI/180.0;
 		double maxDistance = Double.parseDouble(ask("Input distance to travel"));
 		int howMany = Integer.parseInt(ask("How many?"));
 		/*if(howMany < 2) {
-			start(new double[]{0,-3}, ballAngle,maxDistance, true, true);
+			run(new double[]{0,-3}, ballAngle,maxDistance, true, true);
 			return;
 		}*/
 		//double[][] finalPoints = new double[howMany][];
@@ -72,7 +72,7 @@ public class Billiards extends JPanel{
 		for(int n = 0; n < howMany; n++){
 			double x = (random()-.5)*dx;
 			double theta = ballAngle + (random()-.5)*dtheta;
-			finalPoints[n] = start(new double[]{x,-3}, theta, maxDistance, n<10, false);
+			finalPoints[n] = run(new double[]{x,-3}, theta, maxDistance, n<10, false);
 		}
 		System.out.println("Average distance to midpoint: "+avgDistToMidpoint(finalPoints));
 		*/
@@ -88,7 +88,7 @@ public class Billiards extends JPanel{
 		}
 		for(int i = 0; i < numSteps; i++){
 			for(int n = 0; n < howMany; n++){
-				points[n] = start(new double[]{points[n][0],points[n][1]},points[n][2],maxDistance/numSteps,n<10,false);
+				points[n] = run(new double[]{points[n][0],points[n][1]},points[n][2],maxDistance/numSteps,n<10,false);
 			}
 			repaint();
 			interestingStuff[i] = interestingProperties(points);
@@ -126,6 +126,7 @@ public class Billiards extends JPanel{
 				"average distance from midpoint",
 				"maximum minimum distance",
 				"what fraction hit the circle",
+				"maximum minimum distance of velocity vectors (angle)"
 		};
 		for(int l = 0; l < interestingStuff.length; l++){
 			stuffToPrint[l+i] = new Object[interestingStuff[l].length];
@@ -206,10 +207,31 @@ public class Billiards extends JPanel{
 				averageDistanceFromMidpoint(points),
 				maximumMinimumDistance(points),
 				cTmp/(double)points.length, // no int division
+				maximumMinimumVelocityDistance(points),
 		};
 	}
 
-	public double[] start(double[] pos, double ballAngle, double maxDistance, boolean outputGUI, boolean outputSteps){
+	private double maximumMinimumVelocityDistance(double[][] points) {
+		double maxMin2 = 0;
+		for(int i = 0; i < points.length; i++){
+			double min2 = 10000;
+			for(int j = 0; j < points.length; j++){
+				double d2 = dist2(velocity(points[i]),velocity(points[j]));
+				if(j != i && d2 < min2) min2 = d2;
+			}
+			if(min2 > maxMin2) maxMin2 = min2;
+		}
+		return sqrt(maxMin2);
+	}
+
+	private double[] velocity(double[] point) {
+		return new double[]{
+				cos(point[2]),
+				sin(point[2]),
+		};
+	}
+
+	public double[] run(double[] pos, double ballAngle, double maxDistance, boolean outputGUI, boolean outputSteps){
 		double[] oldpos = pos;
 		double sideAngle = Double.NaN;
 		double curDist = 0;
