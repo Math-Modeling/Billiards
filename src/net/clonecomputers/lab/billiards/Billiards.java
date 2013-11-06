@@ -5,11 +5,11 @@ import static java.lang.Math.*;
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
-import java.util.*;
 
 import javax.swing.*;
 
 import org.apache.commons.csv.*;
+
 //import javax.imageio.ImageIO;
 
 @SuppressWarnings("serial")
@@ -224,7 +224,7 @@ public class Billiards extends JPanel{
 		return sqrt(maxMin2);
 	}
 
-	private double[] velocity(double[] point) {
+	private static double[] velocity(double[] point) {
 		return new double[]{
 				cos(point[2]),
 				sin(point[2]),
@@ -290,7 +290,7 @@ public class Billiards extends JPanel{
 		g.drawRect(4, 4, canvas.getWidth()+1, canvas.getHeight()+1);
 	}
 
-	private double findBallAngle(double ballAngle, double sideAngle) {
+	private static double findBallAngle(double ballAngle, double sideAngle) {
 		double a = ballAngle;
 		a=((a%(PI*2))+(PI*10))%(PI*2);
 //		if(Double.isNaN(sideAngle)){
@@ -303,7 +303,7 @@ public class Billiards extends JPanel{
 		return (2*sideAngle) - a;
 	}
 
-	private double findSideAngle(double[] pos) {
+	private static double findSideAngle(double[] pos) {
 		if(pos[0] == -3 || pos[0] == 3){
 			return PI/2;
 		}else if(pos[1] == -3 || pos[1] == 3){
@@ -330,7 +330,7 @@ public class Billiards extends JPanel{
 		return findEdge(pos, a);
 	}
 
-	private double[] findEdge(double[] pos, double a){
+	private static double[] findEdge(double[] pos, double a){
 		//System.out.println("Angle = " + a*180/PI);
 		//System.out.println("Currently at ("+pos[0]+","+pos[1]+")");
 		boolean hitsTop = a>0 && a<PI,
@@ -384,11 +384,11 @@ public class Billiards extends JPanel{
 	}
 	
 	@SuppressWarnings("unused")
-	private String p(double[] pos){
+	private static String p(double[] pos){
 		return "(" + pos[0] + "," + pos[1] + ")";
 	}
 	
-	private boolean onEdge(double[] pos){
+	private static boolean onEdge(double[] pos){
 		return pos[0] == -3 ||
 				pos[0] == 3 ||
 				pos[1] == -3 ||
